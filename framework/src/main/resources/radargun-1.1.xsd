@@ -76,6 +76,7 @@
                      <choice maxOccurs="unbounded" minOccurs="1">
                         <element name="product" type="rg:product"/>
                         <element name="hazelcast2" type="rg:hazelcast2"/>
+                        <element name="hazelcast3" type="rg:hazelcast3"/>
                         <element name="infinispan4" type="rg:infinispan4"/>
                         <element name="infinispan50" type="rg:infinispan50"/>
                         <element name="infinispan51" type="rg:infinispan51"/>
@@ -92,6 +93,7 @@
                         <element name="coherence3" type="rg:coherence3"/>
                         <element name="jdg60" type="rg:jdg60"/>
                         <element name="jdg61" type="rg:jdg61"/>
+                        <element name="jdg62" type="rg:jdg62"/>
                      </choice>
                   </sequence>
                </complexType>
@@ -251,6 +253,11 @@
       </annotation>
       <complexContent>
          <extension base="rg:AbstractDist">
+            <attribute name="checkEntryCount" type="string">
+               <annotation>
+                  <documentation>Number of entries that will be checked in each step. Default is 1.</documentation>
+               </annotation>
+            </attribute>
             <attribute name="checkThreads" type="string">
                <annotation>
                   <documentation>Number of thread per node which check data validity. Default is 1.</documentation>
@@ -273,12 +280,17 @@
             </attribute>
             <attribute name="extraEntries" type="string">
                <annotation>
-                  <documentation>Entries that have not the form key{number} but occur in the cluster. This string specifies a polynomial in number of slaves: 1,2,3 with 4 slaves would result in 1 + 2*4 + 3*4*4 = 57 extra entries.Defaults to 0.</documentation>
+                  <documentation>Entries that do not have the expected form but occur in the cluster. This string specifies a polynomial in number of slaves: 1,2,3 with 4 slaves would result in 1 + 2*4 + 3*4*4 = 57 extra entries.Defaults to 0.</documentation>
                </annotation>
             </attribute>
             <attribute name="failOnNull" type="string">
                <annotation>
                   <documentation>If entry is null, fail immediatelly. Default is false.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="firstEntryOffset" type="string">
+               <annotation>
+                  <documentation>Index of key of first entry. This number will be multiplied by slaveIndex. Default is 0.</documentation>
                </annotation>
             </attribute>
             <attribute name="ignoreSum" type="string">
@@ -296,14 +308,24 @@
                   <documentation>Number of queries after which a DEBUG log message is printed. Default is 10000.</documentation>
                </annotation>
             </attribute>
+            <attribute name="memoryOnly" type="string">
+               <annotation>
+                  <documentation>If the cache wrapper supports persistent storage and this is set to true, the check will be executed only against in-memory data. Default is false.</documentation>
+               </annotation>
+            </attribute>
             <attribute name="numEntries" type="string">
                <annotation>
-                  <documentation>Number of entries with key in form key{number} in the cache.</documentation>
+                  <documentation>Number of entries with key in form specified by the last used key generator, in the cache.</documentation>
                </annotation>
             </attribute>
             <attribute name="numOwners" type="string">
                <annotation>
                   <documentation>Number of owners of one key (primary + backups). If negative the number is multiplied by cluster size, therefore, -1 means full replication. Default is -1.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="stepEntryCount" type="string">
+               <annotation>
+                  <documentation>Number of entries stepped in each step. Default is 1.</documentation>
                </annotation>
             </attribute>
          </extension>
@@ -387,6 +409,16 @@
                   <documentation>Full class name of the key generator. Default is org.radargun.stressors.StringKeyGenerator.</documentation>
                </annotation>
             </attribute>
+            <attribute name="keyGeneratorParam" type="string">
+               <annotation>
+                  <documentation>Used to initialize the key generator. Null by default.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="loadAllKeys" type="string">
+               <annotation>
+                  <documentation>This option is valid only for sharedKeys=true. It forces local loading of all keys (not only numEntries/numNodes). Default is false.</documentation>
+               </annotation>
+            </attribute>
             <attribute name="numEntries" type="string">
                <annotation>
                   <documentation>Number of key-value entries per each client thread which should be used. Default is 100.</documentation>
@@ -420,6 +452,11 @@
             <attribute name="opsCountStatusLog" type="string">
                <annotation>
                   <documentation>Number of operations after which a log entry should be written. Default is 5000.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="poolKeys" type="string">
+               <annotation>
+                  <documentation>Keep all keys in a pool - do not generate the keys for each request anew. Default is true.</documentation>
                </annotation>
             </attribute>
             <attribute name="preferAsyncOperations" type="string">
@@ -585,6 +622,11 @@
             <attribute name="enforceMemoryThrashHold" type="string">
                <annotation>
                   <documentation>Specifies whether the check for amount of free memory should be performed. Default is true.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="heapDumpDir" type="string">
+               <annotation>
+                  <documentation>Directory where the heap dump will be produced if the memory threshold is hit. By default the dump will not be produced.</documentation>
                </annotation>
             </attribute>
             <attribute name="memoryThreshold" type="string">
@@ -879,6 +921,11 @@ Remember to set up JVM args: "-agentpath:/path/to/libjprofilerti.so=offline,id=1
                   <documentation>A String in the form of 'methodName:methodParameter;methodName1:methodParameter1' that allows invoking a method on the Mapper Object. The method must be public and take a String parameter. The default is null.</documentation>
                </annotation>
             </attribute>
+            <attribute name="printResult" type="string">
+               <annotation>
+                  <documentation>Boolean value that determines if the final results of the MapReduceTask are written to the log of the first slave node. The default is false.</documentation>
+               </annotation>
+            </attribute>
             <attribute name="reducerFqn" type="string">
                <annotation>
                   <documentation>Fully qualified class name of the org.infinispan.distexec.mapreduce.Reducer implementation to execute.</documentation>
@@ -1009,6 +1056,16 @@ Remember to set up JVM args: "-agentpath:/path/to/libjprofilerti.so=offline,id=1
             <attribute name="stringData" type="string">
                <annotation>
                   <documentation>If true, then String objects with printable characters are written to the cache.The default is false</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="targetMemoryUse" type="string">
+               <annotation>
+                  <documentation>The number of bytes to write to the cache when the valueByteOverhead, stringData, and valueSize are taken into account. The code assumes this is an even multiple of valueSize plus valueByteOverhead. If stringData is true, then the code assumes this is an even multiple of (2 * valueSize) plus valueByteOverhead.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="valueByteOverhead" type="string">
+               <annotation>
+                  <documentation>The bytes used over the size of the key and value when putting to the cache. By default the stage retrieves the value from cache wrapper automatically.</documentation>
                </annotation>
             </attribute>
             <attribute name="valueCount" type="string">
@@ -1271,6 +1328,21 @@ Remember to set up JVM args: "-agentpath:/path/to/libjprofilerti.so=offline,id=1
                   <documentation>List of slaves whose data should be loaded by other threads because these slaves are not alive. Default is empty.</documentation>
                </annotation>
             </attribute>
+            <attribute name="loadDataOnSlaves" type="string">
+               <annotation>
+                  <documentation>List of slaves where the data should be loaded (others immediately start executing requests). Default is all live slaves).</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="loadOnly" type="string">
+               <annotation>
+                  <documentation>If set to true, the stressor does not execute any requests after loading the data. Default is false.</documentation>
+               </annotation>
+            </attribute>
+            <attribute name="loadWithPutIfAbsent" type="string">
+               <annotation>
+                  <documentation>Use conditional putIfAbsent instead of simple put for loading the keys. Default is false.</documentation>
+               </annotation>
+            </attribute>
             <attribute name="numEntries" type="string">
                <annotation>
                   <documentation>Amount of entries (key-value pairs) inserted into the cache. Default is 1024.</documentation>
@@ -1380,7 +1452,13 @@ Remember to set up JVM args: "-agentpath:/path/to/libjprofilerti.so=offline,id=1
          <documentation>Stop BackgroundStressors.</documentation>
       </annotation>
       <complexContent>
-         <extension base="rg:AbstractDist"/>
+         <extension base="rg:AbstractDist">
+            <attribute name="waitUntilLoaded" type="string">
+               <annotation>
+                  <documentation>If true, the phase does not finish until all stressors stop loading its data. Default is false.</documentation>
+               </annotation>
+            </attribute>
+         </extension>
       </complexContent>
    </complexType>
    <complexType name="StopJVMMonitor">
@@ -1617,6 +1695,11 @@ Remember to set up JVM args: "-agentpath:/path/to/libjprofilerti.so=offline,id=1
          <extension base="rg:abstractProduct"/>
       </complexContent>
    </complexType>
+   <complexType name="hazelcast3">
+      <complexContent>
+         <extension base="rg:abstractProduct"/>
+      </complexContent>
+   </complexType>
    <complexType name="infinispan4">
       <complexContent>
          <extension base="rg:abstractProduct"/>
@@ -1693,6 +1776,11 @@ Remember to set up JVM args: "-agentpath:/path/to/libjprofilerti.so=offline,id=1
       </complexContent>
    </complexType>
    <complexType name="jdg61">
+      <complexContent>
+         <extension base="rg:abstractProduct"/>
+      </complexContent>
+   </complexType>
+   <complexType name="jdg62">
       <complexContent>
          <extension base="rg:abstractProduct"/>
       </complexContent>

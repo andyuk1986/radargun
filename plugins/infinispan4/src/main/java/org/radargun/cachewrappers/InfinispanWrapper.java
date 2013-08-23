@@ -31,10 +31,11 @@ import org.infinispan.remoting.transport.Address;
 import org.radargun.CacheWrapper;
 import org.radargun.features.AtomicOperationsCapable;
 import org.radargun.features.Debugable;
+import org.radargun.features.ProvidesMemoryOverhead;
 import org.radargun.utils.TypedProperties;
 import org.radargun.utils.Utils;
 
-public class InfinispanWrapper implements CacheWrapper, Debugable, AtomicOperationsCapable {
+public class InfinispanWrapper implements CacheWrapper, Debugable, AtomicOperationsCapable, ProvidesMemoryOverhead {
 
    enum State {
       STOPPED,
@@ -345,22 +346,26 @@ public class InfinispanWrapper implements CacheWrapper, Debugable, AtomicOperati
       return -1; // Infinispan does not provide this directly, JMX stats would have to be summed
    }
 
-   protected void blockForRehashing(Cache<Object, Object> aCache) throws InterruptedException {
+   protected void blockForRehashing(Cache<Object, Object> cache) throws InterruptedException {
       // should we be blocking until all rehashing, etc. has finished?
       long gracePeriod = MINUTES.toMillis(15);
       long giveup = System.currentTimeMillis() + gracePeriod;
-      if (aCache.getConfiguration().getCacheMode().isDistributed()) {
-         while (!aCache.getAdvancedCache().getDistributionManager().isJoinComplete() && System.currentTimeMillis() < giveup)
+      if (isCacheDistributed(cache)) {
+         while (!cache.getAdvancedCache().getDistributionManager().isJoinComplete() && System.currentTimeMillis() < giveup)
             Thread.sleep(200);
       }
 
-      if (aCache.getConfiguration().getCacheMode().isDistributed() && !aCache.getAdvancedCache().getDistributionManager().isJoinComplete())
+      if (isCacheDistributed(cache) && !cache.getAdvancedCache().getDistributionManager().isJoinComplete())
          throw new RuntimeException("Caches haven't discovered and joined the cluster even after " + Utils.prettyPrintMillis(gracePeriod));
    }
 
-   protected void injectEvenConsistentHash(Cache<Object, Object> aCache, TypedProperties confAttributes) {
-      if (aCache.getConfiguration().getCacheMode().isDistributed()) {
-         ConsistentHash ch = aCache.getAdvancedCache().getDistributionManager().getConsistentHash();
+   protected boolean isCacheDistributed(Cache<Object, Object> cache) {
+      return cache.getConfiguration().getCacheMode().isDistributed();
+   }
+
+   protected void injectEvenConsistentHash(Cache<Object, Object> cache, TypedProperties confAttributes) {
+      if (isCacheDistributed(cache)) {
+         ConsistentHash ch = cache.getAdvancedCache().getDistributionManager().getConsistentHash();
          if (ch instanceof EvenSpreadingConsistentHash) {
             int threadsPerNode = confAttributes.getIntProperty("threadsPerNode", -1);
             if (threadsPerNode < 0) throw new IllegalStateException("When EvenSpreadingConsistentHash is used threadsPerNode must also be set.");
@@ -440,7 +445,7 @@ public class InfinispanWrapper implements CacheWrapper, Debugable, AtomicOperati
    }
 
    @Override
-   public void debugKey(String bucket, String key) {
+   public void debugKey(String bucket, Object key) {
       log.debug(getKeyInfo(bucket, key));
       List<Level> levels = new ArrayList<Level>();
       String[] debugPackages = getDebugKeyPackages();
@@ -509,4 +514,10 @@ public class InfinispanWrapper implements CacheWrapper, Debugable, AtomicOperati
    public boolean isTransactional(String bucket) {
       return tm != null;
    }
+
+   @Override
+   public int getValueByteOverhead() {
+      return -1;
+   }   
+   
 }

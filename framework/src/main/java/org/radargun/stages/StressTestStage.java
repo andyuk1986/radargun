@@ -1,5 +1,8 @@
 package org.radargun.stages;
 
+import static java.lang.Double.parseDouble;
+import static org.radargun.utils.Utils.numberFormat;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,13 +17,11 @@ import org.radargun.state.MasterState;
 import org.radargun.stressors.AllRecordingStatistics;
 import org.radargun.stressors.CacheSpecificKeyGenStressor;
 import org.radargun.stressors.HistogramStatistics;
+import org.radargun.stressors.KeyGenerator;
 import org.radargun.stressors.MultiStatistics;
 import org.radargun.stressors.Statistics;
 import org.radargun.stressors.StressTestStressor;
 import org.radargun.stressors.StringKeyGenerator;
-
-import static java.lang.Double.parseDouble;
-import static org.radargun.utils.Utils.numberFormat;
 
 /**
  * Simulates the work with a distributed web sessions.
@@ -64,6 +65,9 @@ public class StressTestStage extends AbstractDistStage {
    @Property(doc = "Full class name of the key generator. Default is org.radargun.stressors.StringKeyGenerator.")
    protected String keyGeneratorClass = StringKeyGenerator.class.getName();
 
+   @Property(doc = "Used to initialize the key generator. Null by default.")
+   private String keyGeneratorParam = null;
+
    @Property(doc = "Specifies if the requests should be explicitely wrapped in transactions. By default" +
          "the cachewrapper is queried whether it does support the transactions, if it does," +
          "transactions are used, otherwise these are not.")
@@ -91,11 +95,17 @@ public class StressTestStage extends AbstractDistStage {
          "used by all threads. Default is false.")
    protected boolean sharedKeys = false;
 
+   @Property(doc = "This option is valid only for sharedKeys=true. It forces local loading of all keys (not only numEntries/numNodes). Default is false.")
+   protected boolean loadAllKeys = false;
+
    @Property(doc = "The keys can be fixed for the whole test run period or we the set can change over time. Default is true = fixed.")
    protected boolean fixedKeys = true;
 
    @Property(doc = "If true, putIfAbsent and replace operations are used. Default is false.")
    protected boolean useAtomics = false;
+
+   @Property(doc = "Keep all keys in a pool - do not generate the keys for each request anew. Default is true.")
+   protected boolean poolKeys = true;
 
    @Property(doc = "Specifies whether the key generator is produced by a cache wrapper and therefore is product-specific. Default is false.")
    protected boolean cacheSpecificKeyGenerator = false;
@@ -118,12 +128,12 @@ public class StressTestStage extends AbstractDistStage {
          stressor = new CacheSpecificKeyGenStressor();
       } else {
          stressor = new StressTestStressor();
-         stressor.setKeyGeneratorClass(keyGeneratorClass);
       }
       stressor.setNodeIndex(getSlaveIndex(), getActiveSlaveCount());
       stressor.setDurationMillis(duration);
       setupStatistics(stressor);
       PropertyHelper.copyProperties(this, stressor);
+      slaveState.put(KeyGenerator.KEY_GENERATOR, stressor.getKeyGenerator());
       Map<String, Object> results = stressor.stress(cacheWrapper);
       if (generateHistogramRange) {
          slaveState.put(HistogramStatistics.HISTOGRAM_RANGES, results);

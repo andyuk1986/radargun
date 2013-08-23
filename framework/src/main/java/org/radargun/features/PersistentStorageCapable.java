@@ -20,30 +20,44 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.radargun.cachewrappers;
+package org.radargun.features;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-
-import org.infinispan.Cache;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.configuration.cache.ClusteringConfiguration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
+import org.radargun.CacheWrapper;
 
 /**
+ * Feature for wrappers that support persistent storage.
+ *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class Infinispan60Wrapper extends InfinispanXSWrapper {
-   @Override
-   protected ConfigurationBuilderHolder createConfiguration(String configFile) throws FileNotFoundException {
-      InputStream input = FileLookupFactory.newInstance().lookupFileStrict(configFile, Thread.currentThread().getContextClassLoader());
-      return new ParserRegistry(Thread.currentThread().getContextClassLoader()).parse(input);
-   }
+public interface PersistentStorageCapable extends CacheWrapper {
+   /**
+    * Retrieve value for this bucket and key, ignoring any persistent storage.
+    *
+    * @param bucket
+    * @param key
+    * @return
+    * @throws Exception
+    */
+   Object getMemoryOnly(String bucket, Object key) throws Exception;
 
-   @Override
-   protected boolean isCacheDistributed(Cache<Object, Object> cache) {
-      ClusteringConfiguration clustering = cache.getCacheConfiguration().clustering();
-      return clustering != null && clustering.cacheMode().isDistributed();
-   }
+   /**
+    * Write entry into the cache but do not propagate the write into underlying persistent storage.
+    *
+    * @param bucket
+    * @param key
+    * @param value
+    * @return
+    * @throws Exception
+    */
+   Object putMemoryOnly(String bucket, Object key, Object value) throws Exception;
+
+   /**
+    * Remove entry from the cache but do not remove it from the underlying persistent storage.
+    *
+    * @param bucket
+    * @param key
+    * @return
+    * @throws Exception
+    */
+   Object removeMemoryOnly(String bucket, Object key) throws Exception;
 }
