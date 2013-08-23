@@ -47,5 +47,5 @@ public interface Queryable {
     * Executes keyword or wildcard queries based on the passed parameters.
     * @param queryParameters        the map, which contains the queryable field name with it's expected value.
     */
-   public List executeQuery(Map<String, Object> queryParameters);
+   public Integer executeQuery(Map<String, Object> queryParameters);
 }

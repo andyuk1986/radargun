@@ -39,14 +39,12 @@ public class QueryStage extends StressTestStage {
    @Property(optional = false, doc = "The name of the field for which the query should be executed.")
    private String onField;
 
-   @Property(optional = false, doc = "The matching string which should be used for querying.")
-   private String matching;
-
    protected Map<String, Object> doWork() {
       log.info("Starting "+getClass().getSimpleName()+": " + this);
 
       QueryStressor stressTestStressor = new QueryStressor();
       stressTestStressor.setNodeIndex(getSlaveIndex(), getActiveSlaveCount());
+      stressTestStressor.setDurationMillis(duration);
 
       PropertyHelper.copyProperties(this, stressTestStressor);
 

@@ -25,10 +25,15 @@ import org.radargun.config.Property;
 import org.radargun.config.Stressor;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -52,6 +57,10 @@ public class DataForQueryStressor extends StressTestStressor {
 
    private List<String> wordsFromFile = null;
 
+   private Map<String, Integer> matchingWords = new Hashtable<String, Integer>();
+
+   public static final String MATCHING_WORDS_FILE_PATH = "matching.txt";
+
    @Override
    protected void init(CacheWrapper wrapper) {
       if(dataPath == null) {
@@ -69,7 +78,10 @@ public class DataForQueryStressor extends StressTestStressor {
       StringBuffer str = new StringBuffer();
 
       if (isWildCard) {
-         str.append(wordsFromFile.get(rand.nextInt(wordsFromFile.size())));
+         String word = wordsFromFile.get(rand.nextInt(wordsFromFile.size()));
+         str.append(word);
+
+         saveUsedWordsStatistics(word);
 
          while(str.length() < propertyLength) {
             char symbol = letters[rand.nextInt(letters.length)];
@@ -77,11 +89,23 @@ public class DataForQueryStressor extends StressTestStressor {
          }
       } else {
          while(str.length() < propertyLength) {
-            str.append(wordsFromFile.get(rand.nextInt(wordsFromFile.size()))).append(" ");
+            String word = wordsFromFile.get(rand.nextInt(wordsFromFile.size()));
+            str.append(word).append(" ");
+
+            saveUsedWordsStatistics(word);
          }
       }
 
       return str.toString();
+   }
+
+   private void saveUsedWordsStatistics(final String word) {
+      Integer num = 0;
+      if(matchingWords.containsKey(word)) {
+         num = matchingWords.get(word);
+      }
+
+      matchingWords.put(word, ++num);
    }
 
    private List<String> readDataFromFile() {
@@ -111,7 +135,30 @@ public class DataForQueryStressor extends StressTestStressor {
 
    @Override
    public void destroy() {
-      //Do nothing
+      //Writing the most used word into the file
+
+      Integer max = 0;
+      String key = null;
+      for(Map.Entry<String, Integer> elem : matchingWords.entrySet()) {
+         if (elem.getValue() > max) {
+            max = elem.getValue();
+            key = elem.getKey();
+         }
+      }
+
+      FileWriter writer = null;
+      try {
+         writer = new FileWriter(new File(MATCHING_WORDS_FILE_PATH));
+         writer.write(key);
+      } catch(Exception ex) {
+         ex.printStackTrace();
+      } finally {
+         try {
+            writer.close();
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+      }
    }
 
    @Override

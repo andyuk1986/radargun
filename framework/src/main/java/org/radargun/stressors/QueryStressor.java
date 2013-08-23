@@ -18,14 +18,22 @@
  */
 package org.radargun.stressors;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.radargun.CacheWrapper;
 import org.radargun.config.Property;
 import org.radargun.config.Stressor;
 import org.radargun.features.Queryable;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 /**
  * Stressor for Local cache mode, which will execute queries on the cache.
@@ -34,16 +42,23 @@ import java.util.Map;
  */
 @Stressor(doc = "Executes queries using infinispan-query API against the cache wrapper.")
 public class QueryStressor extends StressTestStressor {
+   private static final Log log = LogFactory.getLog(QueryStressor.class);
+
    @Property(optional = false, doc = "Boolean variable which shows whether the keyword query should be done or wildcard.")
    private boolean isWildcardQuery;
 
    @Property(optional = false, doc = "The name of the field for which the query should be executed.")
    private String onField;
 
-   @Property(optional = false, doc = "The matching string which should be used for querying.")
-   private String matching;
+   private static List<Integer> resultObjects = null;
+   private String matchingWord = null;
 
-   private List<Integer> resultObjects = null;
+   @Override
+   protected void init(CacheWrapper wrapper) {
+      this.matchingWord = getMatchingWord();
+      resultObjects = new Vector<Integer>(1000);
+      super.init(wrapper);
+   }
 
    public OperationLogic getLogic() {
       return new QueryRunnerLogic();
@@ -53,18 +68,17 @@ public class QueryStressor extends StressTestStressor {
 
       @Override
       public void init(String bucketId, int threadIndex) {
-         resultObjects = new ArrayList();
       }
 
       @Override
       public Object run(Stressor stressor, int iteration) {
          Map<String, Object> paramMap = new HashMap<String, Object>();
          paramMap.put(Queryable.QUERYABLE_FIELD, onField);
-         paramMap.put(Queryable.MATCH_STRING, matching);
+         paramMap.put(Queryable.MATCH_STRING, matchingWord);
          paramMap.put(Queryable.IS_WILDCARD, isWildcardQuery);
 
-         List obj = (List) stressor.makeRequest(iteration, Operation.QUERY, paramMap);
-         resultObjects.add(obj.size());
+         Integer obj = (Integer) stressor.makeRequest(iteration, Operation.QUERY, paramMap);
+         resultObjects.add(obj);
 
          return obj;
       }
@@ -76,14 +90,38 @@ public class QueryStressor extends StressTestStressor {
       return super.processResults();
    }
 
+   private String getMatchingWord() {
+      String word = null;
+
+      BufferedReader reader = null;
+      try {
+         reader = new BufferedReader(new FileReader(new File(DataForQueryStressor.MATCHING_WORDS_FILE_PATH)));
+         word = reader.readLine();
+      } catch(Exception ex) {
+         ex.printStackTrace();
+      } finally {
+         if (reader != null) {
+            try {
+               reader.close();
+            } catch (IOException e) {
+               e.printStackTrace();
+            }
+         }
+      }
+      log.info("The matching word is: " + word);
+      return word;
+   }
+
    private void compareQueryResults() {
       int previousResult = -1;
       for (Integer queryResult : resultObjects) {
-         if (previousResult > 0) {
-            assert queryResult == previousResult : "The results are not the same for all queries.";
-         }
+         if(queryResult != null) {
+            if (previousResult > 0) {
+               assert queryResult == previousResult : "The results are not the same for all queries.";
+            }
 
-         previousResult = queryResult;
+            previousResult = queryResult;
+         }
       }
    }
 
@@ -92,7 +130,7 @@ public class QueryStressor extends StressTestStressor {
       return "QueryStressor{" +
             "isWildcardQuery=" + isWildcardQuery +
             ", onField=" + onField +
-            ", matching=" + matching +
+            ", matching=" + matchingWord +
             "}";
    }
 }
