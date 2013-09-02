@@ -25,16 +25,12 @@ import org.radargun.config.Property;
 import org.radargun.config.Stressor;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Stressor which writes Queryable data into the cache.
@@ -54,6 +50,9 @@ public class DataForQueryStressor extends StressTestStressor {
 
    @Property(doc = "Specifies the full path of the property file which contains different words for querying. No default value is provided. This property is mandatory.")
    private String dataPath = null;
+
+   @Property(doc = "Specifies the number of keywords to use during the query run. The default value is 1.")
+   private int numberOfKeywords = 1;
 
    private List<String> wordsFromFile = null;
 
@@ -136,29 +135,54 @@ public class DataForQueryStressor extends StressTestStressor {
    @Override
    public void destroy() {
       //Writing the most used word into the file
-
-      Integer max = 0;
-      String key = null;
-      for(Map.Entry<String, Integer> elem : matchingWords.entrySet()) {
-         if (elem.getValue() > max) {
-            max = elem.getValue();
-            key = elem.getKey();
-         }
-      }
+      Map<String, Integer> sortedMap = sortByComparator(matchingWords);
 
       FileWriter writer = null;
+      BufferedWriter bufWriter = null;
       try {
          writer = new FileWriter(new File(MATCHING_WORDS_FILE_PATH));
-         writer.write(key);
+         bufWriter = new BufferedWriter(writer);
+         int matchingWordsCounter = 0;
+
+         for (String key : sortedMap.keySet()) {
+            bufWriter.write(key);
+            bufWriter.newLine();
+
+            if(++matchingWordsCounter >= numberOfKeywords) {
+               break;
+            }
+         }
       } catch(Exception ex) {
          ex.printStackTrace();
       } finally {
          try {
+            bufWriter.close();
             writer.close();
          } catch (IOException e) {
             e.printStackTrace();
          }
       }
+   }
+
+   private Map<String, Integer> sortByComparator(Map<String, Integer> unsortMap) {
+      List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(unsortMap.entrySet());
+
+      // Sorting the list based on values
+      Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
+         public int compare(Map.Entry<String, Integer> o1,
+                            Map.Entry<String, Integer> o2) {
+
+            return o2.getValue().compareTo(o1.getValue());
+         }
+      });
+
+      // Maintaining insertion order with the help of LinkedList
+      Map<String, Integer> sortedMap = new LinkedHashMap<String, Integer>();
+      for (Map.Entry<String, Integer> entry : list) {
+         sortedMap.put(entry.getKey(), entry.getValue());
+      }
+
+      return sortedMap;
    }
 
    @Override

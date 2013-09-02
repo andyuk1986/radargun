@@ -21,6 +21,7 @@ package org.radargun.cachewrappers;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.query.dsl.BooleanJunction;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.dsl.TermTermination;
 import org.infinispan.Cache;
@@ -45,21 +46,31 @@ public class InfinispanQueryWrapper extends InfinispanXSWrapper implements Query
       Cache cache = cacheManager.getCache(getCacheName());
 
       SearchManager searchManager = Search.getSearchManager(cache);
-      QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(QueryableData.class).get();
-      TermTermination termTermination;
+      BooleanJunction queryBuilder = searchManager.buildQueryBuilderForClass(QueryableData.class).get().bool();
+
       Boolean isWildcardQuery = (Boolean) queryParameters.get(IS_WILDCARD);
       String onField = (String) queryParameters.get(QUERYABLE_FIELD);
-      String matching = (String) queryParameters.get(MATCH_STRING);
+      List<String> matching = (List<String>) queryParameters.get(MATCH_STRING);
 
-      if (isWildcardQuery) {
-         termTermination = queryBuilder.keyword().wildcard().onField(onField).matching(matching);
-      } else {
-         termTermination = queryBuilder.keyword().onField(onField).matching(matching);
+      TermTermination termTermination = null;
+      QueryBuilder queryBuilder1 = searchManager.buildQueryBuilderForClass(QueryableData.class).get();
+
+      for(String matchingWord : matching) {
+         if (isWildcardQuery) {
+            termTermination = queryBuilder1.keyword().wildcard().onField(onField).matching(matchingWord);
+         } else {
+            termTermination = queryBuilder1.keyword().onField(onField).matching(matchingWord);
+         }
+
+         queryBuilder.should(termTermination.createQuery());
       }
 
-      CacheQuery cacheQuery = searchManager.getQuery(termTermination.createQuery());
+      CacheQuery cacheQuery = searchManager.getQuery(queryBuilder.createQuery());
+      int resultSize = cacheQuery.getResultSize();
 
-      return cacheQuery.getResultSize();
+      System.out.println("Result Size: " + resultSize);
+
+      return resultSize;
    }
 
    public void empty() {

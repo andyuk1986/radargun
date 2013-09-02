@@ -51,11 +51,12 @@ public class QueryStressor extends StressTestStressor {
    private String onField;
 
    private static List<Integer> resultObjects = null;
-   private String matchingWord = null;
+   private List<String> matchingWordList = null;
 
    @Override
    protected void init(CacheWrapper wrapper) {
-      this.matchingWord = getMatchingWord();
+      this.matchingWordList = getMatchingWordList();
+
       resultObjects = new Vector<Integer>(1000);
       super.init(wrapper);
    }
@@ -74,7 +75,7 @@ public class QueryStressor extends StressTestStressor {
       public Object run(Stressor stressor, int iteration) {
          Map<String, Object> paramMap = new HashMap<String, Object>();
          paramMap.put(Queryable.QUERYABLE_FIELD, onField);
-         paramMap.put(Queryable.MATCH_STRING, matchingWord);
+         paramMap.put(Queryable.MATCH_STRING, matchingWordList);
          paramMap.put(Queryable.IS_WILDCARD, isWildcardQuery);
 
          Integer obj = (Integer) stressor.makeRequest(iteration, Operation.QUERY, paramMap);
@@ -90,13 +91,28 @@ public class QueryStressor extends StressTestStressor {
       return super.processResults();
    }
 
-   private String getMatchingWord() {
-      String word = null;
+   private void compareQueryResults() {
+      int previousResult = -1;
+      for (Integer queryResult : resultObjects) {
+         if (queryResult != null) {
+            if (previousResult > 0) {
+               assert queryResult == previousResult : "The results are not the same for all queries.";
+            }
 
+            previousResult = queryResult;
+         }
+      }
+   }
+
+   private List<String> getMatchingWordList() {
+      List<String> wordList = new ArrayList<String>();
       BufferedReader reader = null;
       try {
+         String word = null;
          reader = new BufferedReader(new FileReader(new File(DataForQueryStressor.MATCHING_WORDS_FILE_PATH)));
-         word = reader.readLine();
+         while((word = reader.readLine()) != null) {
+            wordList.add(word);
+         }
       } catch(Exception ex) {
          ex.printStackTrace();
       } finally {
@@ -108,21 +124,8 @@ public class QueryStressor extends StressTestStressor {
             }
          }
       }
-      log.info("The matching word is: " + word);
-      return word;
-   }
-
-   private void compareQueryResults() {
-      int previousResult = -1;
-      for (Integer queryResult : resultObjects) {
-         if(queryResult != null) {
-            if (previousResult > 0) {
-               assert queryResult == previousResult : "The results are not the same for all queries.";
-            }
-
-            previousResult = queryResult;
-         }
-      }
+      log.info("The matching word list size is: " + wordList.size());
+      return wordList;
    }
 
    @Override
@@ -130,7 +133,6 @@ public class QueryStressor extends StressTestStressor {
       return "QueryStressor{" +
             "isWildcardQuery=" + isWildcardQuery +
             ", onField=" + onField +
-            ", matching=" + matchingWord +
             "}";
    }
 }
