@@ -53,11 +53,14 @@ public class InfinispanQueryWrapper extends InfinispanXSWrapper implements Query
       List<String> matching = (List<String>) queryParameters.get(MATCH_STRING);
 
       TermTermination termTermination = null;
-      QueryBuilder queryBuilder1 = searchManager.buildQueryBuilderForClass(QueryableData.class).get();
-
+      QueryBuilder queryBuilder1 = null;
       for(String matchingWord : matching) {
+         queryBuilder1 = searchManager.buildQueryBuilderForClass(QueryableData.class).get();
+
          if (isWildcardQuery) {
-            termTermination = queryBuilder1.keyword().wildcard().onField(onField).matching(matchingWord);
+            String matchingWordStr = "*" + matchingWord + "*";
+
+            termTermination = queryBuilder1.keyword().wildcard().onField(onField).matching(matchingWordStr);
          } else {
             termTermination = queryBuilder1.keyword().onField(onField).matching(matchingWord);
          }
@@ -67,8 +70,6 @@ public class InfinispanQueryWrapper extends InfinispanXSWrapper implements Query
 
       CacheQuery cacheQuery = searchManager.getQuery(queryBuilder.createQuery());
       int resultSize = cacheQuery.getResultSize();
-
-      System.out.println("Result Size: " + resultSize);
 
       return resultSize;
    }
