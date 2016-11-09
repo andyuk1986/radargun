@@ -1,0 +1,100 @@
+<!-- RadarGun 3.0 benchmark -->
+<benchmark xmlns="urn:radargun:benchmark:3.0">
+
+   <!-- Specifies where should the master open socket  -->
+   <master bindAddress="${master.address:127.0.0.1}" port="${master.port:2103}"/>
+
+   <!-- List of cluster configurations where the benchmark should run-->
+   <clusters>
+      <cluster size="3">
+         <group name="server-lon" size="1" />
+         <group name="server-brn" size="1" />
+         <group name="client-lon" size="1" />
+      </cluster>
+   </clusters>
+
+   <!-- List of configurations of the services -->
+   <configurations>
+      <config name="HotRod NodeJsfailover">
+         <setup group="server-lon" plugin="infinispan90">
+            <server xmlns="urn:radargun:plugins:infinispan90:3.0" file="clustered-xsite-lon-1.xml">
+               <home>${jdg.home}</home>
+               <jmx-domain>jboss.datagrid-infinispan</jmx-domain>
+               <cache-manager-name>clustered</cache-manager-name>
+               <args>
+                  -Djava.net.preferIPv4Stack=true
+                  -Djboss.socket.binding.port-offset=100
+                  -Djava.managed.server.id=node1
+               </args>
+               <env>
+                  JAVA_OPTS=-server -Xms8g -Xmx8g -XX:+UseLargePages -XX:MaxPermSize=512m -XX:MaxDirectMemorySize=64m -XX:NewRatio=3 -XX:+UseConcMarkSweepGC -XX:+UseParNewGC
+               </env>
+            </server>
+         </setup>
+         <setup group="server-brn" plugin="infinispan90">
+            <server xmlns="urn:radargun:plugins:infinispan90:3.0" file="clustered-xsite-brn-1.xml">
+               <home>${jdg.home}</home>
+               <jmx-domain>jboss.datagrid-infinispan</jmx-domain>
+               <cache-manager-name>clustered</cache-manager-name>
+               <args>
+                  -Djava.net.preferIPv4Stack=true
+                  -Djava.managed.server.id=node2
+               </args>
+               <env>
+                  JAVA_OPTS=-server -Xms8g -Xmx8g -XX:+UseLargePages -XX:MaxPermSize=512m -XX:MaxDirectMemorySize=64m -XX:NewRatio=3 -XX:+UseConcMarkSweepGC -XX:+UseParNewGC
+               </env>
+            </server>
+         </setup>
+         <setup group="client-lon" plugin="nodejs">
+            <nodejs xmlns="urn:radargun:plugins:nodejs:3.0">
+               <servers>${lon.node1:127.0.0.1}:11322</servers>
+               <path-to-node-project>${node.config.path}/</path-to-node-project>
+               <path-to-script>${js.script.path}</path-to-script>
+               <url-to-node-js-server>${url.to.nodejs.server}</url-to-node-js-server>
+            </nodejs>
+         </setup>
+      </config>
+   </configurations>
+
+   <!-- Sequence of stages executed on the cluster -->
+   <rg:scenario xmlns:rg="urn:radargun:benchmark:3.0"
+                xmlns="urn:radargun:stages:core:3.0"
+                xmlns:cache="urn:radargun:stages:cache:3.0">
+
+      <repeat times="${repeat.times:1}">
+
+         <service-start groups="server-lon, server-brn" expect-num-slaves="2"/>
+         <service-start groups="client-lon"/>
+
+         <sleep time="${sleepTime:10s}"/>
+
+         <cache:background-load-start num-entries="${entry.count:10000}" groups="client-lon" max-load-attempts="1" num-threads="${thread.count:5}">
+            <cache:cache-selector>
+               <cache:use-cache>
+                  <cache:cache>default</cache:cache>
+               </cache:use-cache>
+            </cache:cache-selector>
+            <cache:value-generator>
+               <cache:cache-aware-text cache-name="default" suffix="LON"/>
+            </cache:value-generator>
+         </cache:background-load-start>
+
+         <sleep time="${sleepTime.stop:10s}"/>
+
+         <service-stop groups="server-lon" graceful="false"/>
+
+         <cache:background-load-stop timeout-duration="2m" groups="client-lon"/>
+
+         <cache:xs-repl-check entry-size="-1" num-entries="${entry.count:10000}" groups="client-lon" ignore-sum="true" check-threads="5">
+            <cache:value-generator>
+               <cache:cache-aware-text cache-name="default" suffix="LON"/>
+            </cache:value-generator>
+         </cache:xs-repl-check>
+
+         <service-stop graceful="false"/>
+      </repeat>
+   </rg:scenario>
+
+   <cleanup check-threads="false" />
+
+</benchmark>
