@@ -133,7 +133,7 @@
             </property>
          </activation>
          <properties>
-            <version.infinispan>15.0.0-SNAPSHOT</version.infinispan>
+            <version.infinispan>15.1.0-SNAPSHOT</version.infinispan>
          </properties>
       </profile>
    </profiles>

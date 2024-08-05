@@ -444,10 +444,11 @@
             <module>../plugins/jgroups36</module>
             <module>../plugins/jgroups42</module>
             <module>../plugins/jgroups52</module>
+            <module>../plugins/jgroups53</module>
          </modules>
          <properties>
-            <plugins.jgroups-latest>jgroups52</plugins.jgroups-latest>
-            <plugins.jgroups>jgroups30,jgroups32,jgroups33,jgroups34,jgroups35,jgroups36,jgroups42,${plugins.jgroups-latest}</plugins.jgroups>
+            <plugins.jgroups-latest>jgroups53</plugins.jgroups-latest>
+            <plugins.jgroups>jgroups30,jgroups32,jgroups33,jgroups34,jgroups35,jgroups36,jgroups42,jgroups52,${plugins.jgroups-latest}</plugins.jgroups>
          </properties>
       </profile>
       <profile>
@@ -481,10 +482,12 @@
             <module>../plugins/infinispan121</module>
             <module>../plugins/infinispan130</module>
             <module>../plugins/infinispan140</module>
+            <module>../plugins/infinispan150</module>
+            <module>../plugins/infinispan151</module>
          </modules>
          <properties>
-            <plugins.infinispan-latest>infinispan140</plugins.infinispan-latest>
-            <plugins.infinispan>infinispan90,infinispan94,infinispan100,infinispan101,infinispan110,infinispan120,infinispan121,infinispan130,${plugins.infinispan-latest}</plugins.infinispan>
+            <plugins.infinispan-latest>infinispan151</plugins.infinispan-latest>
+            <plugins.infinispan>infinispan90,infinispan94,infinispan100,infinispan101,infinispan110,infinispan120,infinispan121,infinispan130,infinispan140,infinispan150,${plugins.infinispan-latest}</plugins.infinispan>
          </properties>
       </profile>
       <profile>
@@ -532,10 +535,11 @@
             <module>../plugins/jdg82</module>
             <module>../plugins/jdg83</module>
             <module>../plugins/jdg84</module>
+            <module>../plugins/jdg85</module>
          </modules>
          <properties>
-            <plugins.jdg-latest>jdg84</plugins.jdg-latest>
-            <plugins.jdg>jdg73,jdg80,jdg81,jdg82,jdg83,${plugins.jdg-latest}</plugins.jdg>
+            <plugins.jdg-latest>jdg85</plugins.jdg-latest>
+            <plugins.jdg>jdg73,jdg80,jdg81,jdg82,jdg83,jdg84,${plugins.jdg-latest}</plugins.jdg>
          </properties>
       </profile>
       <profile>

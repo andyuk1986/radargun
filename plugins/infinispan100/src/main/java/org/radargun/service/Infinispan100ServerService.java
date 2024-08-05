@@ -22,7 +22,7 @@ import org.radargun.utils.Utils;
 public class Infinispan100ServerService extends Infinispan80ServerService {
 
    @Property(doc = "Default server port for Hotrod, Rest and other operations. Default 11222")
-   private Integer defaultServerPort = 11222;
+   protected Integer defaultServerPort = 11222;
 
    @Property(doc="jgruoups config. If set, it will replace the default <jgroups> config")
    private String jgroupsConfig;
@@ -49,10 +49,10 @@ public class Infinispan100ServerService extends Infinispan80ServerService {
    private boolean addUser=false;
 
    @Property(doc="Username of the user to be created.")
-   private String username;
+   protected String username;
 
    @Property(doc="Password of the user to be created.")
-   private String password;
+   protected String password;
 
    @Property(doc="Libs to be added to the classpath. Buildr string comma separated. Example: group:artifactId:version;group:artifactId:version")
    private String libs;
@@ -67,8 +67,7 @@ public class Infinispan100ServerService extends Infinispan80ServerService {
 
       try {
 
-         clustered = new Infinispan100ServerClustered(this, defaultServerPort, username, password);
-
+         initServerClustered();
          Utils.unzip(getServerZip(), getRadargunInstalationFolder());
 
          Path homePath = FileSystems.getDefault().getPath(getRadargunInstalationFolder());
@@ -121,6 +120,10 @@ public class Infinispan100ServerService extends Infinispan80ServerService {
       }
 
       topologyHistory = new Infinispan60ServerTopologyHistory(this);
+   }
+
+   protected void initServerClustered() throws IOException {
+      clustered = new Infinispan100ServerClustered(this, defaultServerPort, username, password);
    }
 
    @Override

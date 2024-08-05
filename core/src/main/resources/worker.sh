@@ -71,7 +71,7 @@ help_and_exit() {
 }
 
 welcome "This script is used to launch the local worker process."
-
+JVM_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
 ### read in any command-line params
 while ! [ -z $1 ]
 do
