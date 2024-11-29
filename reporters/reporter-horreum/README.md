@@ -12,11 +12,7 @@ Example configuration
     <report>
         <horreum xmlns="urn:radargun:reporters:reporter-horreum:3.0"
                   horreum-url="https://horreum"
-                  keycloak-url="https://horreum-keycloak"
-                  keycloak-realm="horreum"
-                  horreum-user="my-user"
-                  horreum-password="my-pwd"
-                  client-id="horreum-ui"
+                  horreum-api-key="my-api-key"
                   horreum-test="horreum-test"
                   horreum-owner="my-owner"
                   horreum-access="PUBLIC"

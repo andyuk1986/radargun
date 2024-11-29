@@ -12,15 +12,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.ws.rs.core.Response;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.hyperfoil.tools.HorreumClient;
-import io.hyperfoil.tools.horreum.entity.json.Access;
+import io.hyperfoil.tools.horreum.api.data.Access;
+import jakarta.ws.rs.core.Response;
 import org.radargun.config.Configuration;
 import org.radargun.config.MainConfig;
 import org.radargun.config.Property;
@@ -40,20 +39,8 @@ public class HorreumReporter extends AbstractReporter {
    @Property(doc = "horreumUrl")
    private String horreumUrl = "localhost";
 
-   @Property(doc = "keycloakUrl")
-   private String keycloakUrl = "localhost";
-
-   @Property(doc = "keycloakRealm")
-   private String keycloakRealm = "horreum";
-
-   @Property(doc = "horreumUser")
-   private String horreumUser;
-
-   @Property(doc = "horreumPassword")
-   private String horreumPassword;
-
-   @Property(doc = "clientId")
-   private String clientId = "horreum-ui";
+   @Property(doc = "horreumApiKey")
+   private String horreumApiKey;
 
    @Property(doc = "horreumTest")
    private String horreumTest;
@@ -66,9 +53,6 @@ public class HorreumReporter extends AbstractReporter {
 
    @Property(doc = "horreumSchema")
    private String horreumSchema = "urn:radargun:0.1";
-
-   @Property(doc = "horreumHttpsCertificate")
-   private String horreumHttpsCertificate;
 
    @Property(doc = "Compute response times at certain percentiles.")
    private double[] percentiles = new double[] {50d, 60d, 70d, 80d, 85d, 90d, 95d, 99d, 99.9d, 99.99d, 99.999d, 99.9999d};
@@ -95,14 +79,7 @@ public class HorreumReporter extends AbstractReporter {
       if (horreumClient == null) {
          HorreumClient.Builder builder = new HorreumClient.Builder()
                .horreumUrl(horreumUrl)
-               .keycloakUrl(keycloakUrl)
-               .keycloakRealm(keycloakRealm)
-               .horreumUser(horreumUser)
-               .horreumPassword(horreumPassword)
-               .clientId(clientId);
-         if (horreumHttpsCertificate != null) {
-            builder.sslContext(horreumHttpsCertificate);
-         }
+               .horreumApiKey(horreumApiKey);
          horreumClient = builder.build();
       }
       for (Report report : reports) {
@@ -120,7 +97,6 @@ public class HorreumReporter extends AbstractReporter {
 
          String start = DATE_FORMAT.format(dataValue.firstTimestamp);
          String stop = DATE_FORMAT.format(dataValue.lastTimestamp);
-         String token = null;
          String description = null;
 
          Map<String, Object> jsonData = new HashMap<>();
@@ -136,7 +112,7 @@ public class HorreumReporter extends AbstractReporter {
          JsonNode data = mapper.convertValue(jsonData, new TypeReference<>(){});
          writer.writeValue(outputFile, data);
 
-         Response response = horreumClient.runService.addRunFromData(start, stop, horreumTest, horreumOwner, Access.valueOf(horreumAccess), token, horreumSchema, description, data);
+         Response response = horreumClient.runService.addRunFromData(start, stop, horreumTest, horreumOwner, Access.valueOf(horreumAccess), horreumSchema, description, data);
          String responseBody = response.readEntity(String.class);
          if (response.getStatus() != 200) {
             LOG.error(String.format("Horreum response(%d): %s", response.getStatus(), responseBody));

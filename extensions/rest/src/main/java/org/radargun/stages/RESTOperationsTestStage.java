@@ -3,10 +3,9 @@ package org.radargun.stages;
 import java.util.Collections;
 import java.util.List;
 
-import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.NewCookie;
-import javax.ws.rs.core.Response;
-
+import jakarta.ws.rs.core.Cookie;
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 import org.radargun.Operation;
 import org.radargun.RESTOperationInvocations;
 import org.radargun.Version;

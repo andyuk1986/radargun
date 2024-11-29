@@ -2,10 +2,9 @@ package org.radargun;
 
 import java.util.List;
 
-import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
+import jakarta.ws.rs.core.Cookie;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import org.radargun.stages.test.Invocation;
 import org.radargun.traits.RESTOperations;
 
