@@ -1,36 +1,22 @@
 package org.radargun.service;
 
-import javax.transaction.TransactionManager;
-
+import jakarta.transaction.TransactionManager;
 import org.radargun.logging.Log;
 import org.radargun.logging.LogFactory;
-import org.radargun.traits.Transactional;
 
-/**
- * @author Diego Lovison &lt;dlovison@redhat.com&gt;
- */
-public class Infinispan93HotRodTransactional implements Transactional {
-   protected static final Log log = LogFactory.getLog(Infinispan93HotRodTransactional.class);
+public class Infinispan150HotRodTransactional extends Infinispan93HotRodTransactional {
+   protected static final Log log = LogFactory.getLog(Infinispan150HotRodTransactional.class);
    protected static final boolean trace = log.isTraceEnabled();
 
-   protected final Infinispan93HotrodService service;
-
-   public Infinispan93HotRodTransactional(Infinispan93HotrodService service) {
-      this.service = service;
+   public Infinispan150HotRodTransactional(Infinispan150HotrodService service) {
+      super(service);
    }
 
-   @Override
-   public Configuration getConfiguration(String cacheName) {
-      return service.isCacheTransactional(cacheName) ?
-         Configuration.TRANSACTIONAL : Configuration.NON_TRANSACTIONAL;
-   }
-
-   @Override
    public Transaction getTransaction() {
-      return new Infinispan93HotRodTransactional.Tx();
+      return new Infinispan150HotRodTransactional.Infinispan150Tx();
    }
 
-   protected class Tx implements Transaction {
+   protected class Infinispan150Tx extends Infinispan93HotRodTransactional.Tx {
       protected TransactionManager tm;
 
       @Override
@@ -51,7 +37,7 @@ public class Infinispan93HotRodTransactional implements Transactional {
       public void begin() {
          try {
             tm.begin();
-            javax.transaction.Transaction transaction = tm.getTransaction();
+            jakarta.transaction.Transaction transaction = tm.getTransaction();
             if (trace) log.trace("Transaction begin " + transaction);
          } catch (Exception e) {
             throw new RuntimeException(e);
@@ -78,7 +64,7 @@ public class Infinispan93HotRodTransactional implements Transactional {
          }
       }
 
-      private <T> TransactionManager getTransactionManager(T resource) {
+      private <T> jakarta.transaction.TransactionManager getTransactionManager(T resource) {
          return ((HotRodOperations.HotRodCache) resource).noReturn.getTransactionManager();
       }
    }

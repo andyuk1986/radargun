@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.FailureMode;
 import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.compat.log.Log4JLogger;
 import org.radargun.Service;
 import org.radargun.config.Converter;
@@ -82,6 +83,11 @@ public class SpyMemcachedService implements Lifecycle {
                @Override
                public long getOperationTimeout() {
                   return operationTimeout;
+               }
+
+               @Override
+               public AuthDescriptor getAuthDescriptor() {
+                  return AuthDescriptor.typical("admin", "password");
                }
             }, servers);
          }

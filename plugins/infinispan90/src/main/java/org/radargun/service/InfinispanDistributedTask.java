@@ -18,7 +18,6 @@ import org.infinispan.distexec.DistributedTask;
 import org.infinispan.distexec.DistributedTaskBuilder;
 import org.infinispan.distexec.DistributedTaskExecutionPolicy;
 import org.infinispan.distexec.DistributedTaskFailoverPolicy;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.radargun.config.Destroy;
@@ -133,7 +132,7 @@ public class InfinispanDistributedTask<K, V, T> implements DistributedTaskExecut
    }
 
    private Address findHostPhysicalAddress(String nodeAddress) {
-      Transport t = ((DefaultCacheManager) service.cacheManager).getTransport();
+      Transport t = service.getTransport();
       if (t != null) {
          for (Address address : t.getPhysicalAddresses()) {
             if (address.toString().contains(nodeAddress)) {

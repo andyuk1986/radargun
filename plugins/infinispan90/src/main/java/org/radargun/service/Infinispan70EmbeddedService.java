@@ -33,7 +33,7 @@ public abstract class Infinispan70EmbeddedService extends Infinispan60EmbeddedSe
    }
 
    protected TP getTransportProtocol() {
-      JGroupsTransport transport = (JGroupsTransport) cacheManager.getTransport();
+      JGroupsTransport transport = getTransport();
       return (TP) transport.getChannel().getProtocolStack().findProtocol(TP.class);
    }
 

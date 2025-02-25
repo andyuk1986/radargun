@@ -88,8 +88,12 @@ public abstract class Infinispan60EmbeddedService extends Infinispan53EmbeddedSe
       }
    }
 
+   protected JGroupsTransport getTransport() {
+      return (JGroupsTransport) cacheManager.getTransport();
+   }
+
    protected void startJGroupsDumper(Runnable thread) {
-      JGroupsTransport transport = (JGroupsTransport) cacheManager.getTransport();
+      JGroupsTransport transport = getTransport();
       if (transport == null || transport.getChannel() == null || !transport.getChannel().isOpen()) {
          // JGroups are not initialized, wait
          scheduledExecutor.schedule(thread, 1, TimeUnit.SECONDS);

@@ -70,8 +70,12 @@ public class Infinispan93HotrodService extends Infinispan92HotrodService {
          } else {
             remoteCache = managerNoReturn.getCache(cacheName);
          }
-         isCacheTransactional = remoteCache.getTransactionManager() != null;
+         isCacheTransactional = isCacheTransactional(remoteCache);
       }
       return isCacheTransactional;
+   }
+
+   public boolean isCacheTransactional(RemoteCache remoteCache) {
+      return remoteCache.getTransactionManager() != null;
    }
 }

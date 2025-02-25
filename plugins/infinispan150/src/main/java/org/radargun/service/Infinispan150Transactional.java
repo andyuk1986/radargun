@@ -1,44 +1,26 @@
 package org.radargun.service;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
-import org.radargun.logging.Log;
-import org.radargun.logging.LogFactory;
-import org.radargun.traits.Transactional;
+public class Infinispan150Transactional extends Infinispan51Transactional {
 
-/**
- * @author Diego Lovison &lt;dlovison@redhat.com&gt;
- */
-public class Infinispan93HotRodTransactional implements Transactional {
-   protected static final Log log = LogFactory.getLog(Infinispan93HotRodTransactional.class);
-   protected static final boolean trace = log.isTraceEnabled();
-
-   protected final Infinispan93HotrodService service;
-
-   public Infinispan93HotRodTransactional(Infinispan93HotrodService service) {
-      this.service = service;
-   }
-
-   @Override
-   public Configuration getConfiguration(String cacheName) {
-      return service.isCacheTransactional(cacheName) ?
-         Configuration.TRANSACTIONAL : Configuration.NON_TRANSACTIONAL;
+   public Infinispan150Transactional(Infinispan51EmbeddedService service) {
+      super(service);
    }
 
    @Override
    public Transaction getTransaction() {
-      return new Infinispan93HotRodTransactional.Tx();
+      return new Infinispan150Tx();
    }
 
-   protected class Tx implements Transaction {
+   protected class Infinispan150Tx extends InfinispanTransactional.Tx {
       protected TransactionManager tm;
-
       @Override
       public <T> T wrap(T resource) {
          if (resource == null) {
             return null;
          }
-         TransactionManager tm = getTransactionManager(resource);
+         TransactionManager tm = getAdvancedCache(resource).getTransactionManager();
          if (this.tm != null && this.tm != tm) {
             throw new IllegalArgumentException("Different transaction managers for single transaction!");
          }
@@ -51,8 +33,11 @@ public class Infinispan93HotRodTransactional implements Transactional {
       public void begin() {
          try {
             tm.begin();
-            javax.transaction.Transaction transaction = tm.getTransaction();
+            jakarta.transaction.Transaction transaction = tm.getTransaction();
             if (trace) log.trace("Transaction begin " + transaction);
+            if (enlistExtraXAResource) {
+               transaction.enlistResource(new DummyXAResource());
+            }
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
@@ -76,10 +61,6 @@ public class Infinispan93HotRodTransactional implements Transactional {
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
-      }
-
-      private <T> TransactionManager getTransactionManager(T resource) {
-         return ((HotRodOperations.HotRodCache) resource).noReturn.getTransactionManager();
       }
    }
 }

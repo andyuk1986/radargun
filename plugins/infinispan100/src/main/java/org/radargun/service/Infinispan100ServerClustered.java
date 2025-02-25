@@ -12,12 +12,16 @@ public class Infinispan100ServerClustered extends InfinispanServerClustered {
 
    protected final Log log = LogFactory.getLog(getClass());
 
-   private InfinispanRestAPI restAPI;
+   protected AbstractInfinispanRestAPI restAPI;
    private boolean coordinator;
+
+   public Infinispan100ServerClustered(Infinispan100ServerService service) {
+      super(service);
+   }
 
    public Infinispan100ServerClustered(Infinispan100ServerService service, Integer defaultPort, String username, String password) throws IOException {
       super(service);
-      this.restAPI = new InfinispanRestAPI(defaultPort, username, password);
+      setRestAPI(new Infinispan100RestAPI(defaultPort, username, password));
    }
 
    @Override
@@ -34,7 +38,7 @@ public class Infinispan100ServerClustered extends InfinispanServerClustered {
          CacheManagerInfo cacheManagerInfo = restAPI.getCacheManager();
          infinispanCacheManagerInfo = createBasedOn(cacheManagerInfo);
          this.coordinator = cacheManagerInfo.isCoordinator();
-      } catch (InfinispanRestAPI.RestException e) {
+      } catch (AbstractInfinispanRestAPI.RestException e) {
          log.error(e.getMessage(), e);
          infinispanCacheManagerInfo = new InfinispanCacheManagerInfo();
       }
@@ -47,7 +51,11 @@ public class Infinispan100ServerClustered extends InfinispanServerClustered {
       return new InfinispanCacheManagerInfo(membersString, nodeAddress);
    }
 
-   public InfinispanRestAPI getRestAPI() {
+   protected void setRestAPI(AbstractInfinispanRestAPI restAPI) {
+      this.restAPI = restAPI;
+   }
+
+   public AbstractInfinispanRestAPI getRestAPI() {
       return restAPI;
    }
 }

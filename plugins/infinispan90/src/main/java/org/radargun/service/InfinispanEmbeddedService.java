@@ -23,6 +23,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.radargun.Service;
 import org.radargun.config.Property;
 import org.radargun.logging.Log;
@@ -276,4 +277,6 @@ public abstract class InfinispanEmbeddedService {
    protected abstract ConfigDumpHelper createConfigDumpHelper();
 
    protected abstract boolean isJmxEnabled();
+
+   protected abstract JGroupsTransport getTransport();
 }

@@ -61,7 +61,7 @@ public class Infinispan110FailureEmbeddedService extends Infinispan110EmbeddedSe
                long max = 60000;
                long now = System.currentTimeMillis();
                while (System.currentTimeMillis() - now <= max) {
-                  int siteSize = cacheManager.getTransport().getSitesView().size();
+                  int siteSize = getTransport().getSitesView().size();
                   if (siteSize == total) {
                      match = true;
                      break;
@@ -108,7 +108,7 @@ public class Infinispan110FailureEmbeddedService extends Infinispan110EmbeddedSe
          }
 
          private RELAY2 getRELAY2() {
-            JGroupsTransport transport = (JGroupsTransport) cacheManager.getTransport();
+            JGroupsTransport transport = getTransport();
             RELAY2 relay2 = transport.getChannel().getProtocolStack().findProtocol("RELAY2");
             return relay2;
          }

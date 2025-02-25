@@ -46,7 +46,7 @@ public class Infinispan60InternalsExposition implements InternalsExposition {
       GlobalComponentRegistry globalComponentRegistry = service.cacheManager.getGlobalComponentRegistry();
       addValues(findTPE(globalComponentRegistry.getComponent(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)), "Async Transport Executor", values);
       addValues(findTPE(globalComponentRegistry.getComponent(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)), "Remote Commands Executor", values);
-      JGroupsTransport transport = (JGroupsTransport) service.cacheManager.getTransport();
+      JGroupsTransport transport = service.getTransport();
       if (transport != null) {
          TP tp = (TP) transport.getChannel().getProtocolStack().getBottomProtocol();
          addValues((ThreadPoolExecutor) tp.getThreadPool(), "ThreadPool", values);

@@ -1,6 +1,7 @@
 package org.radargun.service;
 
 import org.infinispan.Cache;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -35,11 +36,19 @@ public class InfinispanTopologyHistory extends AbstractTopologyHistory {
          this.cacheName = cacheName;
       }
 
+      protected ConsistentHash getConsistentHashAtStart(TopologyChangedEvent<?, ?> e) {
+         return e.getConsistentHashAtStart();
+      }
+
+      protected ConsistentHash getConsistentHashAtEnd(TopologyChangedEvent<?, ?> e) {
+         return e.getConsistentHashAtEnd();
+      }
+
       @TopologyChanged
       public void onTopologyChanged(TopologyChangedEvent<?, ?> e) {
          log.debug("Topology change " + (e.isPre() ? "started" : "finished"));
-         int atStart = service.membersCount(e.getConsistentHashAtStart());
-         int atEnd = service.membersCount(e.getConsistentHashAtEnd());
+         int atStart = service.membersCount(getConsistentHashAtStart(e));
+         int atEnd = service.membersCount(getConsistentHashAtEnd(e));
          TopologyHistory.Event.EventType type = e.isPre() ? TopologyHistory.Event.EventType.START : TopologyHistory.Event.EventType.END;
          addEvent(topologyChanges, cacheName, type, atStart, atEnd);
       }
