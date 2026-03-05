@@ -36,9 +36,8 @@ public class InfinispanLifecycle implements Lifecycle {
 
    @Override
    public void start() {
-      log.info("Infinispan version: " + org.infinispan.Version.printVersion());
-      log.debug("Loading JGroups from: " + org.jgroups.Version.class.getProtectionDomain().getCodeSource().getLocation());
-      log.info("JGroups version: " + org.jgroups.Version.printDescription());
+      printInfinispanVersion();
+      printJGroupsVersion();
       try {
          if (beginStart()) {
 
@@ -168,5 +167,14 @@ public class InfinispanLifecycle implements Lifecycle {
             stateLock.unlock();
          }
       }
+   }
+
+   protected void printInfinispanVersion() {
+      log.info("Infinispan version: " + org.infinispan.Version.printVersion());
+   }
+
+   protected void printJGroupsVersion() {
+      log.debug("Loading JGroups from: " + org.jgroups.Version.class.getProtectionDomain().getCodeSource().getLocation());
+      log.info("JGroups version: " + org.jgroups.Version.printDescription());
    }
 }

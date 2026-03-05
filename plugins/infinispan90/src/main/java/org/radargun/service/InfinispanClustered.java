@@ -54,7 +54,7 @@ public class InfinispanClustered implements Clustered {
       return membershipHistory.get(membershipHistory.size() - 1).members;
    }
 
-   private Collection<Member> convert(List<Address> addresses) {
+   protected Collection<Member> convert(List<Address> addresses) {
       Collection<Member> members = new ArrayList<>(addresses.size());
       boolean coord = true;
       for (Address address : addresses) {

@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.impl.jdk.RestClientJDK;
@@ -36,7 +36,7 @@ public class Infinispan150RestAPI extends AbstractInfinispanRestAPI {
    public Infinispan150RestAPI(Integer serverPort, String username, String password) throws IOException {
       this.mapper = new ObjectMapper();
       this.mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-      this.mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+      this.mapper.setPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy());
       this.cacheManagerName = System.getProperty("radargun.infinispan.cacheManagerName", "clustered");
       RestClientConfigurationBuilder config = new RestClientConfigurationBuilder();
       config.socketTimeout(DEFAULT_TIMEOUT)

@@ -16,6 +16,10 @@ public abstract class Infinispan71HotrodService extends Infinispan70HotrodServic
    @Override
    protected ConfigurationBuilder getDefaultHotRodConfig() {
       ConfigurationBuilder cb = super.getDefaultHotRodConfig();
+      return setNearCachingConfig(cb);
+   }
+
+   protected ConfigurationBuilder setNearCachingConfig(ConfigurationBuilder cb) {
       cb.nearCache().mode(nearCachingConfig.mode).maxEntries(nearCachingConfig.maxEntries);
       return cb;
    }

@@ -71,6 +71,11 @@ public abstract class Infinispan60HotrodService extends InfinispanHotrodService 
 
    @Init
    public void init() {
+      ConfigurationBuilder builder = getDefaultConfigurationBuilder();
+      configuration = builder.build();
+   }
+
+   public ConfigurationBuilder getDefaultConfigurationBuilder() {
       ConfigurationBuilder builder = getDefaultHotRodConfig();
       if (propertiesPath != null) {
          Properties p = new Properties();
@@ -82,7 +87,8 @@ public abstract class Infinispan60HotrodService extends InfinispanHotrodService 
          }
       }
       afterConfigurationPropertiesLoad(builder);
-      configuration = builder.build();
+
+      return builder;
    }
 
    protected void afterConfigurationPropertiesLoad(ConfigurationBuilder builder) {

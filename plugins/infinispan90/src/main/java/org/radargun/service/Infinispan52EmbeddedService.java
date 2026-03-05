@@ -71,8 +71,8 @@ public abstract class Infinispan52EmbeddedService extends Infinispan51EmbeddedSe
    @Override
    protected String getCHInfo(DistributionManager dm) {
       StringBuilder sb = new StringBuilder(1000);
-      sb.append("\nWrite CH: ").append(dm.getWriteConsistentHash());
-      sb.append("\nRead CH: ").append(dm.getReadConsistentHash());
+      sb.append("\nWrite CH: ").append(getWriteConsistentHash(dm));
+      sb.append("\nRead CH: ").append(getReadConsistentHash(dm));
       return sb.toString();
    }
 
@@ -100,7 +100,7 @@ public abstract class Infinispan52EmbeddedService extends Infinispan51EmbeddedSe
    protected boolean isJoinComplete(Cache<?, ?> cache) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       boolean joinComplete = dm.isJoinComplete();
-      Set<Integer> ownedSegments = dm.getReadConsistentHash().getSegmentsForOwner(cache.getCacheManager().getAddress());
+      Set<Integer> ownedSegments = getReadConsistentHash(dm).getSegmentsForOwner(cache.getCacheManager().getAddress());
       if (log.isTraceEnabled()) {
          log.trace("joinComplete=" + joinComplete + ", ownedSegments=" + ownedSegments + ", " + getCHInfo(dm));
       }
@@ -111,5 +111,13 @@ public abstract class Infinispan52EmbeddedService extends Infinispan51EmbeddedSe
       GlobalConfiguration global = cacheManager.getCacheManagerConfiguration();
       boolean enabled = global.globalJmxStatistics().enabled();
       return enabled;
+   }
+
+   protected ConsistentHash getReadConsistentHash(DistributionManager dm) {
+      return dm.getReadConsistentHash();
+   }
+
+   protected ConsistentHash getWriteConsistentHash(DistributionManager dm) {
+      return dm.getWriteConsistentHash();
    }
 }
